@@ -10,27 +10,26 @@ public class PageHome extends JFrame implements Navigable {
     private String[] categories = {"Sasak", "Sumbawa", "Mbojo"};
 
     public PageHome() {
-        // Set up frame
         setTitle("SaSaMbo - Home");
         setSize(1200, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
-        // Set background color for the entire frame
+        // ngatur warna backgroun buat seluruh frame
         getContentPane().setBackground(new Color(82, 99, 70));
 
-        // Panel header
+        // panel header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(82, 99, 70));
         headerPanel.setPreferredSize(new Dimension(1200, 80));
 
-        // Logo
+        // logo
         JLabel logoLabel = new JLabel();
         logoLabel.setIcon(new ImageIcon(new ImageIcon("asset/logo.jpeg").getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH)));
         logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
         headerPanel.add(logoLabel, BorderLayout.WEST);
 
-        // Menu buttons
+        // tombol menu
         JPanel menuPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
         menuPanel.setBackground(Color.WHITE);
 
@@ -38,7 +37,7 @@ public class PageHome extends JFrame implements Navigable {
         JButton reviewButton = new JButton("Review");
         JButton profileButton = new JButton("Profil");
 
-        // Adding action listeners for navigation
+        // nambahin action listeners buat navigasi
         homeButton.addActionListener(e -> goToHome());
         reviewButton.addActionListener(e -> goToReview());
         profileButton.addActionListener(e -> goToProfile());
@@ -48,18 +47,18 @@ public class PageHome extends JFrame implements Navigable {
         menuPanel.add(profileButton);
         headerPanel.add(menuPanel, BorderLayout.CENTER);
 
-        // Search bar
+        // kolom search
         JTextField searchField = new JTextField("Selamat Datang, Adit", 20);
         searchField.setEditable(false);
         headerPanel.add(searchField, BorderLayout.EAST);
 
         add(headerPanel, BorderLayout.NORTH);
 
-        // Main panel for pages
+        // panel utama buat halaman
         cardLayout = new CardLayout();
         cardPanel = new JPanel(cardLayout);
 
-        // Add page components (Home, Review, Profile)
+        // nambahin komponen halaman (Home, Review, Profile)
         cardPanel.add(new PageHomeContent(), "Home");
         cardPanel.add(new ReviewPanel(), "Review");
         cardPanel.add(new ProfilePanel(), "Profile");
@@ -70,17 +69,52 @@ public class PageHome extends JFrame implements Navigable {
 
     @Override
     public void goToHome() {
-        cardLayout.show(cardPanel, "Home");
+        animasiTransition("Home");
     }
 
     @Override
     public void goToProfile() {
-        cardLayout.show(cardPanel, "Profile");
+        animasiTransition("Profile");
     }
 
     @Override
     public void goToReview() {
-        cardLayout.show(cardPanel, "Review");
+        animasiTransition("Review");
+    }
+
+    private void animasiTransition(String targetPanelName) {
+        new Thread(() -> {
+            try {
+                // buat efek fade out
+                for (int alpha = 255; alpha >= 0; alpha -= 15) {
+                    setTransisi(alpha);
+                    Thread.sleep(50); 
+                }
+
+                // pindah ke panel tujuan
+                SwingUtilities.invokeLater(() -> cardLayout.show(cardPanel, targetPanelName));
+
+                // efek fade in 
+                for (int alpha = 0; alpha <= 255; alpha += 15) {
+                    setTransisi(alpha);
+                    Thread.sleep(50); 
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    // ngatur transisi panel utama
+    private void setTransisi(int alpha) {
+        SwingUtilities.invokeLater(() -> {
+            for (Component comp : cardPanel.getComponents()) {
+                if (comp.isVisible()) {
+                    comp.setBackground(new Color(82, 99, 70, alpha));
+                    comp.repaint();
+                }
+            }
+        });
     }
 
     private class PageHomeContent extends JPanel {
@@ -88,7 +122,7 @@ public class PageHome extends JFrame implements Navigable {
             setLayout(new BorderLayout(10, 10));
             setBackground(new Color(82, 99, 70));
 
-            // Categories Panel
+            // panel Kategori
             JPanel categoriesPanel = new JPanel(new GridLayout(3, 1, 10, 10));
             categoriesPanel.setBackground(new Color(82, 99, 70));
             categoriesPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 10));
@@ -107,13 +141,13 @@ public class PageHome extends JFrame implements Navigable {
                 JPanel rectanglePanel = new JPanel(new GridLayout(2, 3, 10, 10));
                 rectanglePanel.setBackground(new Color(82, 99, 70));
 
-                // Get image paths for the current category
+                // dapetin jalur gambar 
                 String[] imagePaths = getImagePaths(category);
 
                 for (int j = 0; j < 6; j++) {
                     final int rectIndex = j;
                     JPanel rectangle = new JPanel();
-                    ImageIcon icon = new ImageIcon(new ImageIcon(imagePaths[rectIndex]).getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH));
+                    ImageIcon icon = new ImageIcon(new ImageIcon(imagePaths[rectIndex]).getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH));
                     JLabel imageLabel = new JLabel(icon);
                     rectangle.add(imageLabel);
                     rectangle.setPreferredSize(new Dimension(200, 200));
@@ -168,61 +202,46 @@ public class PageHome extends JFrame implements Navigable {
         }
     }
 
-private void showCulturalDescription(String category, int index) {
-    String[][] culturalDetails = getCulturalDetails(category);
-    if (index < 0 || index >= culturalDetails.length) {
-        return;
-    }
-
-    String[] details = culturalDetails[index];
-
-    JPanel detailPanel = new JPanel(new BorderLayout(10, 10));
-
-    JLabel titleLabel = new JLabel(details[0], SwingConstants.CENTER);
-    titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
-    detailPanel.add(titleLabel, BorderLayout.NORTH);
-
-    // Menggunakan SwingWorker untuk memuat gambar di latar belakang
-    new SwingWorker<ImageIcon, Void>() {
-        @Override
-        protected ImageIcon doInBackground() {
-            ImageIcon icon = new ImageIcon(details[4]);
-            if (icon.getIconWidth() == -1) {
-                // Gambar gagal dimuat, gunakan gambar default
-                return new ImageIcon(new ImageIcon("asset/default.jpg").getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH));
-            }
-            return new ImageIcon(icon.getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH));
+    private void showCulturalDescription(String category, int index) {
+        String[][] culturalDetails = getCulturalDetails(category);
+        if (index < 0 || index >= culturalDetails.length) {
+            return;
         }
 
-        @Override
-        protected void done() {
-            try {
-                ImageIcon icon = get();  // Ambil gambar yang telah diproses
-                JLabel imageLabel = new JLabel(icon, SwingConstants.CENTER);
-                detailPanel.add(imageLabel, BorderLayout.CENTER);
+        String[] details = culturalDetails[index];
 
-                JTextArea descriptionArea = new JTextArea(
-                    "Kategori: " + details[1] + "\n" +
-                    "Suku: " + details[2] + "\n" +
-                    "Rating: " + details[3] + "\n\n" +
-                    "Sejarah:\n" + details[5] + "\n\n" +
-                    "Makna:\n" + details[6] + "\n\n" +
-                    "Fungsi:\n" + details[7] + "\n\n" +
-                    "Keunikan:\n" + details[8] + "\n\n" +
-                    "Pelestarian:\n" + details[9]
-                );
-                descriptionArea.setEditable(false);
-                descriptionArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
-                detailPanel.add(new JScrollPane(descriptionArea), BorderLayout.SOUTH);
+        JPanel detailPanel = new JPanel(new BorderLayout(10, 10));
 
-                // Tampilkan panel detail
-                cardPanel.add(detailPanel, category + "_Detail_" + index);
-                cardLayout.show(cardPanel, category + "_Detail_" + index);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.execute();
+        JLabel titleLabel = new JLabel(details[0], SwingConstants.CENTER);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        detailPanel.add(titleLabel, BorderLayout.NORTH);
+
+        ImageIcon icon = new ImageIcon(details[4]);
+        if (icon.getIconWidth() == -1) {
+            // klau gambar gagal, pakai gambar default
+            icon = new ImageIcon(new ImageIcon("asset/default.jpg").getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH));
+        }
+
+        JLabel imageLabel = new JLabel(icon, SwingConstants.CENTER);
+        detailPanel.add(imageLabel, BorderLayout.CENTER);
+
+        JTextArea descriptionArea = new JTextArea(
+            "Kategori: " + details[1] + "\n" +
+            "Suku: " + details[2] + "\n" +
+            "Rating: " + details[3] + "\n\n" +
+            "Sejarah:\n" + details[5] + "\n\n" +
+            "Makna:\n" + details[6] + "\n\n" +
+            "Fungsi:\n" + details[7] + "\n\n" +
+            "Keunikan:\n" + details[8] + "\n\n" +
+            "Pelestarian:\n" + details[9]
+        );
+        descriptionArea.setEditable(false);
+        descriptionArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        detailPanel.add(new JScrollPane(descriptionArea), BorderLayout.SOUTH);
+
+        // nampilin panel detail
+        cardPanel.add(detailPanel, category + "_Detail_" + index);
+        cardLayout.show(cardPanel, category + "_Detail_" + index);
     }
 
     private String[][] getCulturalDetails(String category) {
